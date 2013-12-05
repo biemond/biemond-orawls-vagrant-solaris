@@ -9,7 +9,8 @@ node 'adminsol.example.com' {
 
   
    include os, ssh
-#  include java, orawls::weblogic, orautils
+   include java
+#   include orawls::weblogic, orautils
 #  include bsu, domains, nodemanager, startwls, userconfig
 #  include machines, managed_servers
 #  include clusters
@@ -104,6 +105,13 @@ class java {
 
   notice 'class java'
 
+  jdksolaris::install7{'jdk1.7.0_45':
+    version              => '7u45',
+    fullVersion          => 'jdk1.7.0_45',
+    x64                  => true,
+    downloadDir          => '/data/install',
+    sourcePath           => "/vagrant",
+  }  
 
 }
 
