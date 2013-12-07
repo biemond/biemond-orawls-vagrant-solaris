@@ -10,18 +10,19 @@ node 'adminsol.example.com' {
   
    include os, ssh
    include java
-#   include orawls::weblogic, orautils
-#  include bsu, domains, nodemanager, startwls, userconfig
-#  include machines, managed_servers
-#  include clusters
-#  include jms_servers,jms_saf_agents
-#  include jms_modules,jms_module_subdeployments
-#  include jms_module_foreign_server_objects,jms_module_foreign_server_entries_objects
-#  include jms_module_quotas,jms_module_cfs,jms_module_objects_errors
-#  include jms_module_objects
-#  include pack_domain
-#
-#  Class['java'] -> Class['orawls::weblogic']
+   include orawls::weblogic, orautils
+   include opatch
+   include domains, nodemanager, startwls, userconfig
+   include machines, managed_servers
+   include clusters
+   include jms_servers,jms_saf_agents
+   include jms_modules,jms_module_subdeployments
+   include jms_module_foreign_server_objects,jms_module_foreign_server_entries_objects
+   include jms_module_quotas,jms_module_cfs,jms_module_objects_errors
+   include jms_module_objects
+   include pack_domain
+
+  Class['java'] -> Class['orawls::weblogic']
 }
 
 
@@ -115,18 +116,17 @@ class java {
 
 }
 
-
-class bsu{
+class opatch{
   require orawls::weblogic
 
-  notice 'class bsu'
+  notice 'class opatch'
   $default_params = {}
-  $bsu_instances = hiera('bsu_instances', [])
-  create_resources('orawls::bsu',$bsu_instances, $default_params)
+  $opatch_instances = hiera('opatch_instances', [])
+  create_resources('orawls::opatch',$opatch_instances, $default_params)
 }
 
 class domains{
-  require orawls::weblogic, bsu
+  require orawls::weblogic, opatch
 
   notice 'class domains'
   $default_params = {}

@@ -2,15 +2,15 @@
 #
 # one machine setup with weblogic 12.1.2
 # creates an WLS Domain with JAX-WS (advanced, soap over jms)
-# needs jdk7, orawls, orautils, fiddyspence-sysctl, erwbgy-limits puppet modules
+# needs jdksolaris, orawls, orautils
 #
 
 node 'nodesol1.example.com', 'nodesol2.example.com' {
   
   include os, ssh
-#  include java, orawls::weblogic, bsu, orautils, copydomain, nodemanager
+  include java, orawls::weblogic, opatch, orautils, copydomain, nodemanager
 
-#  Class['java'] -> Class['orawls::weblogic'] 
+  Class['java'] -> Class['orawls::weblogic'] 
 }
 
 # operating settings for Middleware
@@ -85,20 +85,31 @@ class ssh {
 class java {
   require os
 
+  notice 'class java'
+
+  jdksolaris::install7{'jdk1.7.0_45':
+    version              => '7u45',
+    fullVersion          => 'jdk1.7.0_45',
+    x64                  => true,
+    downloadDir          => '/data/install',
+    sourcePath           => "/vagrant",
+  }  
+
 
 }
 
-class bsu {
+class opatch{
   require orawls::weblogic
 
-  notify { 'class bsu':} 
+  notice 'class opatch'
   $default_params = {}
-  $bsu_instances = hiera('bsu_instances', [])
-  create_resources('orawls::bsu',$bsu_instances, $default_params)
+  $opatch_instances = hiera('opatch_instances', [])
+  create_resources('orawls::opatch',$opatch_instances, $default_params)
 }
 
+
 class copydomain {
-  require orawls::weblogic, bsu
+  require orawls::weblogic, opatch
 
 
   notify { 'class copydomain':} 
@@ -110,7 +121,7 @@ class copydomain {
 
 
 class nodemanager {
-  require orawls::weblogic, bsu, copydomain
+  require orawls::weblogic, opatch, copydomain
 
   notify { 'class nodemanager':} 
   $default_params = {}
