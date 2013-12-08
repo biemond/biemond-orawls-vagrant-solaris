@@ -97,8 +97,8 @@ class orawls::weblogic (
         $java_statement     = "java"
        }
        SunOS: {
-         $oraInstPath        = "/var/opt"
-         $java_statement     = "java -d64"
+         $oraInstPath       = "/var/opt"
+         $java_statement    = "java -d64"
        }
     }
 
@@ -123,7 +123,7 @@ class orawls::weblogic (
                         File["${download_dir}/weblogic_silent_install.xml"]],
       }
 
-      # OPatch native lib fix for 64 solaris 
+      # OPatch native lib fix for 64 solaris
       case $::kernel {
         SunOS: {
           exec { "add -d64 oraparam.ini oracle_common":

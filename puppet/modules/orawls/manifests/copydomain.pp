@@ -1,10 +1,7 @@
 # == Define: orawls::copydomain
 #
-#   copydomain to an other node
+#   copydomain to an other nodes
 ##
-#
-
-
 define orawls::copydomain (
   $version                    = hiera('wls_version'               , 1111),  # 1036|1111|1211|1212
   $middleware_home_dir        = hiera('wls_middleware_home_dir'   , undef), # /opt/oracle/middleware11gR1
@@ -26,10 +23,10 @@ define orawls::copydomain (
 
   if $::override_weblogic_domain_folder == undef {
     $domains_path_dir = "${middleware_home_dir}/user_projects/domains"
-    $apps_path_dir    = "${middleware_home_dir}/user_projects/applications"  
+    $apps_path_dir    = "${middleware_home_dir}/user_projects/applications"
   } else {
     $domains_path_dir = "${::override_weblogic_domain_folder}/domains"
-    $apps_path_dir    = "${::override_weblogic_domain_folder}/applications"  
+    $apps_path_dir    = "${::override_weblogic_domain_folder}/applications"
   }
 
   if ( $version == 1036 or $version == 1111 or $version == 1211 ) {

@@ -11,10 +11,10 @@ define orawls::utils::orainst
 )
 {
   case $::kernel {
-     Linux: { 
+     Linux: {
         $oraInstPath        = "/etc"
      }
-     SunOS: { 
+     SunOS: {
         $oraInstPath        = "/var/opt"
      }
   }

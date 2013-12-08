@@ -27,7 +27,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--name", "adminsol"]
     end
   
-    adminsol.vm.provision :shell, :inline => "echo '10.10.10.10 adminsol.example.com adminsol' >> /etc/hosts ; mkdir /etc/puppet ; mkdir /var/lib ; ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
+    adminsol.vm.provision :shell, :inline => "ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
     
     adminsol.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
@@ -67,7 +67,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--name", "nodesol1"]
     end
   
-    node1.vm.provision :shell, :inline => "echo '10.10.10.100 nodesol1.example.com nodesol1' >> /etc/hosts ; mkdir /etc/puppet ; mkdir /var/lib ; ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
+    node1.vm.provision :shell, :inline => "echo '10.10.10.100 nodesol1.example.com nodesol1' >> /etc/hosts ; ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
     
     node1.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
@@ -107,7 +107,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize ["modifyvm", :id, "--name", "nodesol2"]
     end
   
-    node2.vm.provision :shell, :inline => "echo '10.10.10.200 nodesol2.example.com nodesol2' >> /etc/hosts ; mkdir /etc/puppet ; mkdir /var/lib ; ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
+    node2.vm.provision :shell, :inline => "echo '10.10.10.200 nodesol2.example.com nodesol2' >> /etc/hosts ; ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
     
     node2.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
