@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # adminsol.vm.synced_folder "../data", "/vagrant_data"
   
     adminsol.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "3048"]
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
       vb.customize ["modifyvm", :id, "--name", "adminsol"]
     end
   
@@ -63,7 +63,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # node1.vm.synced_folder "../data", "/vagrant_data"
   
     node1.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "2532"]
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
       vb.customize ["modifyvm", :id, "--name", "nodesol1"]
     end
   
@@ -103,7 +103,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # node2.vm.synced_folder "../data", "/vagrant_data"
   
     node2.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "2532"]
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
       vb.customize ["modifyvm", :id, "--name", "nodesol2"]
     end
   

@@ -22,7 +22,7 @@ define orawls::utils::structure (
   if !defined(Exec["create ${oracle_base_home_dir} directory"]) {
     exec { "create ${oracle_base_home_dir} directory":
       command => "mkdir -p ${oracle_base_home_dir}",
-      unless  => "test -d ${oracle_base_home_dir}",
+#      unless  => "test -d ${oracle_base_home_dir}",
       user    => 'root',
       path    => $exec_path,
     }
@@ -31,7 +31,7 @@ define orawls::utils::structure (
   if !defined(Exec["create ${download_dir} home directory"]) {
     exec { "create ${download_dir} home directory":
       command => "mkdir -p ${download_dir}",
-      unless  => "test -d ${download_dir}",
+#      unless  => "test -d ${download_dir}",
       user    => 'root',
       path    => $exec_path,
     }
