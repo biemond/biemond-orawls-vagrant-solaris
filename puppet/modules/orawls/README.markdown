@@ -31,6 +31,7 @@ Orawls WebLogic Features
 - creates a standard WebLogic domain
 - pack a WebLogic domain
 - copy a WebLogic domain to a other node with SSH, unpack and enroll to a nodemanager
+- OSB, SOA Suite ( with BPM ) and BAM Cluster configuration support ( convert single osb/soa/bam servers to clusters ) 
 - startup the nodemanager
 - start or stop AdminServer, Managed or a Cluster
 - storeUserConfig for storing WebLogic Credentials and using in WLST
@@ -84,10 +85,15 @@ three options
 
 Oracle Big files and alternate download location
 ------------------------------------------------
-Some manifests like weblogic.pp supports an alternative mountpoint for the big oracle setup/install files.  
-When not provided it uses the files location of the wls puppet module  
-else you can use $source => "/mnt" or "puppet:///modules/orawls/" (default) or  "puppet:///middleware/" 
+Some manifests like orawls:weblogic bsu opatch fmw supports an alternative mountpoint for the big oracle setup/install files.  
+When not provided it uses the files folder located in the orawls puppet module  
+else you can use $source =>
+- "/mnt"
+- "/vagrant"
+- "puppet:///modules/orawls/" (default)
+- "puppet:///middleware/"  
 
+when the files are also accesiable locally then you can also set $remote_file => false this will not move the files to the download folder, just extract or install 
 
 Orawls WebLogic Facter
 ----------------------
@@ -842,6 +848,31 @@ when you just have one WebLogic domain on a server
          user_config_dir:      '/home/oracle'
 
 
+### orawls::utils::fmwcluster
+convert existing cluster to a osb or soa suite cluster (BPM is optional) and also convert BAM to a BAM cluster  
+see this for an example https://github.com/biemond/biemond-orawls-vagrant-solaris-soa  
+you need to create a osb, soa or bam cluster with some managed servers first 
+for the osb or soa suite managed servers make sure to set the coherence arguments parameters  
+
+
+    $default_params = {}
+    $fmw_cluster_instances = hiera('fmw_cluster_instances', $default_params)
+    create_resources('orawls::utils::fmwcluster',$fmw_cluster_instances, $default_params)
+
+hiera configuration
+
+    fmw_cluster_instances:
+      'soaCluster':
+         domain_dir:           "/opt/oracle/middleware11g/user_projects/domains/soa_basedomain"
+         soa_cluster_name:     "SoaCluster"
+         bam_cluster_name:     "BamCluster"
+         osb_cluster_name:     "OsbCluster"
+         log_output:           true
+         bpm_enabled:          true
+         bam_enabled:          true
+         soa_enabled:          true
+         osb_enabled:          true
+
 
 ###orawls::wlstexec
 execute any WLST script you want 
@@ -1072,7 +1103,7 @@ Create 2 managed servers and assign them to the machines
             - "javaArguments    = '-XX:PermSize=256m -XX:MaxPermSize=512m -Xms1024m -Xmx1024m -Dweblogic.Stdout=/data/logs/wlsServer1.out -Dweblogic.Stderr=/data/logs/wlsServer1_err.out'"
             - "wlsServerName    = 'wlsServer1'"
             - "machineName      = 'Node1'"
-            - "listenAddress    = 9201"
+            - "listenPort       = 9201"
             - "nodeMgrLogDir    = '/data/logs'"
       'wlsServer2_node2':
          log_output:           *logoutput
@@ -1083,7 +1114,7 @@ Create 2 managed servers and assign them to the machines
             - "javaArguments    = '-XX:PermSize=256m -XX:MaxPermSize=512m -Xms1024m -Xmx1024m -Dweblogic.Stdout=/data/logs/wlsServer2.out -Dweblogic.Stderr=/data/logs/wlsServer2_err.out'"
             - "wlsServerName    = 'wlsServer2'"
             - "machineName      = 'Node2'"
-            - "listenAddress    = 9201"
+            - "listenPort       = 9201"
             - "nodeMgrLogDir    = '/data/logs'"
     
 

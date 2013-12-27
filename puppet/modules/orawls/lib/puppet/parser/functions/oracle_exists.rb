@@ -3,6 +3,7 @@ module Puppet::Parser::Functions
   newfunction(:oracle_exists, :type => :rvalue) do |args|
 
       ora = lookupWlsVar('ora_inst_products')
+
       if ora == "empty"
         return false
       else
