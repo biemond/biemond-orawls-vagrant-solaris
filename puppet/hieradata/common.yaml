@@ -17,8 +17,6 @@ hosts:
     host_aliases:      - 'nodesol2.example.com'
                        - 'nodesol2'
 
-
-
 # global WebLogic vars
 wls_oracle_base_home_dir: &wls_oracle_base_home_dir "/opt/oracle"
 wls_weblogic_user:        &wls_weblogic_user        "weblogic"

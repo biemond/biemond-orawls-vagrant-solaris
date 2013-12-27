@@ -32,4 +32,5 @@ copy_instances:
 nodemanager_instances:
   'nodemanager':
      log_output:           *logoutput
+     nodemanager_address:  "10.10.10.200"
 

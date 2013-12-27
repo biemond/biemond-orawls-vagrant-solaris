@@ -1,6 +1,6 @@
 #  define orawls::utils::wlstbulk
 #
-#  needs puppet version >= 3.4 , need to set --parser future ( puppet agent )
+#  need puppet version > 3.2 , need to set --parser future ( puppet agent )
 #
 #
 #  possible hiera examples ( use hiera_array )
@@ -140,24 +140,24 @@ define orawls::utils::wlstbulk(
      $hieraEntry.each |$hieraTitle,$hieraEntryValues| {
        # select global params of the hiera entry
        # notice $hieraTitle
-       $globals        = $hieraEntryValues.filter |$x| {  $x[0] == 'global_parameters'  }
+       $globals        = $hieraEntryValues.select |$x| {  $x[0] == 'global_parameters'  }
        # only select params from global params, will merge later
        if ( $globals['global_parameters'] != undef ) {
-         $params         = $globals['global_parameters'].filter |$x| {  $x[0] == 'params'  }
+         $params         = $globals['global_parameters'].select |$x| {  $x[0] == 'params'  }
          # remove params from global params, so we will get all the default params
-         $default_params = $globals['global_parameters'].filter |$x| {  $x[0] != 'params'  }
+         $default_params = $globals['global_parameters'].reject |$x| {  $x[0] == 'params'  }
        } else {
          # notice "params is null"
          $params         = {}
          $default_params = {}
        }
        # get all entries except global params
-       $wlstEntries = $hieraEntryValues.filter |$x| {  $x[0] != 'global_parameters'  }
+       $wlstEntries = $hieraEntryValues.reject |$x| {  $x[0] == 'global_parameters'  }
        # for every create WLST object
        $wlstEntries.each |$index5,$value5 | {
           # notice "entry $index5"
 
-          $entry_other_params = $value5.filter |$x| {  $x[0] != 'params'  }
+          $entry_other_params = $value5.reject |$x| {  $x[0] == 'params'  }
           $entry_params = $value5['params']
 
           # merge WLST params with global params
@@ -214,7 +214,7 @@ define orawls::utils::wlstbulk(
        }
     }
  }
-
+#
 # till here
 #
 
