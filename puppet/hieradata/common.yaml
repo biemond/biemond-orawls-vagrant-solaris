@@ -4,18 +4,20 @@ messageEnv:     'common'
 
 
 hosts:
-  'adminsol':
+  'localhost':
+    ip:                "127.0.0.1"
+    host_aliases:      - 'localhost.localdomain'
+                       - 'localhost4'
+                       - 'localhost4.localdomain4'
+  'adminsol.example.com':
     ip:                "10.10.10.10"
-    host_aliases:      - 'adminsol.example.com'
-                       - 'adminsol'
-  'nodesol1':
+    host_aliases:      - 'adminsol'
+  'nodesol1.example.com':
     ip:                "10.10.10.100"
-    host_aliases:      - 'nodesol1.example.com'
-                       - 'nodesol1'
-  'nodesol2':
+    host_aliases:      - 'nodesol1'
+  'nodesol2.example.com':
     ip:                "10.10.10.200"
-    host_aliases:      - 'nodesol2.example.com'
-                       - 'nodesol2'
+    host_aliases:      - 'nodesol2'
 
 # global WebLogic vars
 wls_oracle_base_home_dir: &wls_oracle_base_home_dir "/opt/oracle"
@@ -28,7 +30,7 @@ wls_version:              &wls_version              1212
 wls_os_user:              &wls_os_user              "oracle"
 wls_os_group:             &wls_os_group             "dba"
 wls_download_dir:         &wls_download_dir         "/data/install"
-wls_source:               &wls_source               "/vagrant"
+wls_source:               &wls_source               "/software"
 wls_jdk_home_dir:         &wls_jdk_home_dir         "/usr/jdk/jdk1.7.0_45"
 wls_log_dir:              &wls_log_dir              "/data/logs"
 

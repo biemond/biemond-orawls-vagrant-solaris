@@ -11,16 +11,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     adminsol.vm.box_url = "https://dl.dropboxusercontent.com/s/an5bthwroh1i8k5/solaris10-x86_64.box"
 
     adminsol.vm.hostname = "adminsol.example.com"
-    # adminsol.vm.network :forwarded_port, guest: 80, host: 8888 ,auto_correct: true
-    # adminsol.vm.network :forwarded_port, guest: 7001, host: 7001, auto_correct: true
   
     adminsol.vm.synced_folder ".", "/vagrant", :mount_options => ["dmode=777","fmode=777"]
+    adminsol.vm.synced_folder "/Users/edwin/software", "/software"
   
     adminsol.vm.network :private_network, ip: "10.10.10.10"
-  
-    # adminsol.vm.network :public_network
-    # adminsol.ssh.forward_agent = true
-    # adminsol.vm.synced_folder "../data", "/vagrant_data"
   
     adminsol.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -33,14 +28,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "site.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
+      puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
   
       puppet.facter = {
         "environment" => "development",
         "vm_type"     => "vagrant",
-        "env_app1"    => "application_One",
-        "env_app2"    => "application_Two",
-   }
+      }
       
     end
   
@@ -52,15 +45,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node1.vm.box_url = "https://dl.dropboxusercontent.com/s/an5bthwroh1i8k5/solaris10-x86_64.box"
   
     node1.vm.hostname = "nodesol1.example.com"
-    #node1.vm.network :forwarded_port, guest: 8002, host: 8002, auto_correct: true
   
     node1.vm.synced_folder ".", "/vagrant", :mount_options => ["dmode=777","fmode=777"]
+    node1.vm.synced_folder "/Users/edwin/software", "/software"
   
     node1.vm.network :private_network, ip: "10.10.10.100"
-  
-    # node1.vm.network :public_network
-    # node1.ssh.forward_agent = true
-    # node1.vm.synced_folder "../data", "/vagrant_data"
   
     node1.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -73,13 +62,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "node.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
+      puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
   
       puppet.facter = {
         "environment" => "development",
         "vm_type"     => "vagrant",
-        "env_app1"    => "application_One",
-        "env_app2"    => "application_Two",
       }
       
     end
@@ -92,15 +79,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node2.vm.box_url = "https://dl.dropboxusercontent.com/s/an5bthwroh1i8k5/solaris10-x86_64.box"
 
     node2.vm.hostname = "nodesol2.example.com"
-    #node2.vm.network :forwarded_port, guest: 8001, host: 8001
   
     node2.vm.synced_folder ".", "/vagrant", :mount_options => ["dmode=777","fmode=777"]
+    node2.vm.synced_folder "/Users/edwin/software", "/software"
   
     node2.vm.network :private_network, ip: "10.10.10.200", auto_correct: true
-  
-    # node2.vm.network :public_network
-    # node2.ssh.forward_agent = true
-    # node2.vm.synced_folder "../data", "/vagrant_data"
   
     node2.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -113,13 +96,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "node.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
+      puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
   
       puppet.facter = {
         "environment" => "development",
         "vm_type"     => "vagrant",
-        "env_app1"    => "application_One",
-        "env_app2"    => "application_Two",
       }
       
     end

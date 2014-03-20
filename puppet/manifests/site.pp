@@ -17,8 +17,7 @@ node 'adminsol.example.com' {
    include clusters
    include jms_servers,jms_saf_agents
    include jms_modules,jms_module_subdeployments
-   include jms_module_foreign_server_objects,jms_module_foreign_server_entries_objects
-   include jms_module_quotas,jms_module_cfs,jms_module_objects_errors
+   include jms_module_quotas,jms_module_cfs
    include jms_module_objects
    include pack_domain
 
@@ -217,7 +216,7 @@ class java {
     fullVersion          => 'jdk1.7.0_45',
     x64                  => true,
     downloadDir          => '/data/install',
-    sourcePath           => "/vagrant",
+    sourcePath           => "/software",
   }  
 
 }
@@ -227,7 +226,7 @@ class opatch{
 
   notice 'class opatch'
   $default_params = {}
-  $opatch_instances = hiera('opatch_instances', [])
+  $opatch_instances = hiera('opatch_instances', {})
   create_resources('orawls::opatch',$opatch_instances, $default_params)
 }
 
@@ -236,8 +235,19 @@ class domains{
 
   notice 'class domains'
   $default_params = {}
-  $domain_instances = hiera('domain_instances', [])
+  $domain_instances = hiera('domain_instances', {})
   create_resources('orawls::domain',$domain_instances, $default_params)
+
+  $domain_address = hiera('domain_adminserver_address')
+  $domain_port    = hiera('domain_adminserver_port')
+
+  wls_setting { 'default':
+    user               => hiera('wls_os_user'),
+    weblogic_home_dir  => hiera('wls_weblogic_home_dir'),
+    connect_url        => "t3://${domain_address}:${domain_port}",
+    weblogic_user      => hiera('wls_weblogic_user'),
+    weblogic_password  => hiera('domain_wls_password'),
+  }
 }
 
 class nodemanager {
@@ -245,7 +255,7 @@ class nodemanager {
 
   notify { 'class nodemanager':} 
   $default_params = {}
-  $nodemanager_instances = hiera('nodemanager_instances', [])
+  $nodemanager_instances = hiera('nodemanager_instances', {})
   create_resources('orawls::nodemanager',$nodemanager_instances, $default_params)
 }
 
@@ -255,7 +265,7 @@ class startwls {
 
   notify { 'class startwls':} 
   $default_params = {}
-  $control_instances = hiera('control_instances', [])
+  $control_instances = hiera('control_instances', {})
   create_resources('orawls::control',$control_instances, $default_params)
 }
 
@@ -264,7 +274,7 @@ class userconfig{
 
   notify { 'class userconfig':} 
   $default_params = {}
-  $userconfig_instances = hiera('userconfig_instances', [])
+  $userconfig_instances = hiera('userconfig_instances', {})
   create_resources('orawls::storeuserconfig',$userconfig_instances, $default_params)
 } 
 
@@ -273,156 +283,92 @@ class machines{
 
   notify { 'class machines':} 
   $default_params = {}
-  $machines_instances = hiera('machines_instances', [])
-  create_resources('orawls::wlstexec',$machines_instances, $default_params)
+  $machines_instances = hiera('machines_instances', {})
+  create_resources('wls_machine',$machines_instances, $default_params)
 }
 
 class managed_servers{
   require machines
 
   notify { 'class managed_servers':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('managed_servers_instances')
-  orawls::utils::wlstbulk{ 'managed_servers_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $managed_servers_instances = hiera('managed_servers_instances', {})
+  create_resources('wls_server',$managed_servers_instances, $default_params)
 }
 
 class clusters{
   require managed_servers
 
   notify { 'class clusters':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('cluster_instances')
-  orawls::utils::wlstbulk{ 'cluster_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $cluster_instances = hiera('cluster_instances', {})
+  create_resources('wls_cluster',$cluster_instances, $default_params)
 }
-
 
 class jms_servers{
   require clusters
 
   notify { 'class jms_servers':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_servers_instances')
-  orawls::utils::wlstbulk{ 'jms_servers_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $jmsserver_instances = hiera('jmsserver_instances', {})
+  create_resources('wls_jmsserver',$jmsserver_instances, $default_params)
 }
 
 class jms_saf_agents{
   require jms_servers
 
-  notify { 'class jms_saf_agents':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_saf_agents_instances')
-  orawls::utils::wlstbulk{ 'jms_saf_agents_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  notify { 'class jms_saf_agents':}
+  $default_params = {}
+  $safagent_instances = hiera('safagent_instances', {})
+  create_resources('wls_safagent',$safagent_instances, $default_params)
 }
 
 class jms_modules{
   require jms_saf_agents
 
   notify { 'class jms_modules':} 
-
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_instances')
-  orawls::utils::wlstbulk{ 'jms_module_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $jms_module_instances = hiera('jms_module_instances', {})
+  create_resources('wls_jms_module',$jms_module_instances, $default_params)
 }
 
 class jms_module_subdeployments{
   require jms_modules
 
   notify { 'class jms_module_subdeployments':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_subdeployments_instances')
-  orawls::utils::wlstbulk{ 'jms_module_subdeployments_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $jms_subdeployment_instances = hiera('jms_subdeployment_instances', {})
+  create_resources('wls_jms_subdeployment',$jms_subdeployment_instances, $default_params)
 }
 class jms_module_quotas{
   require jms_module_subdeployments
 
   notify { 'class jms_module_quotas':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_quotas_instances')
-  orawls::utils::wlstbulk{ 'jms_module_quotas_instances':
-    entries_array => $allHieraEntries,
-  }
-
+  $default_params = {}
+  $jms_quota_instances = hiera('jms_quota_instances', {})
+  create_resources('wls_jms_quota',$jms_quota_instances, $default_params)
 }
 
 class jms_module_cfs{
   require jms_module_quotas
 
   notify { 'class jms_module_cfs':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_cf_instances')
-  orawls::utils::wlstbulk{ 'jms_module_cf_instances':
-    entries_array => $allHieraEntries,
-  }
-}
-
-class jms_module_objects_errors{
-  require jms_module_cfs
-
-  notify { 'class jms_module_objects_errors':} 
-  # lookup all managed_servers_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_jms_errors_instances')
-  orawls::utils::wlstbulk{ 'jms_module_jms_errors_instances':
-    entries_array => $allHieraEntries,
-  }
+  $default_params = {}
+  $jms_connection_factory_instances = hiera('jms_connection_factory_instances', {})
+  create_resources('wls_jms_connection_factory',$jms_connection_factory_instances, $default_params)
 }
 
 class jms_module_objects{
-  require jms_module_objects_errors
+  require jms_module_cfs
 
   notify { 'class jms_module_objects':} 
-  # lookup all jms_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_jms_instances')
-
-  orawls::utils::wlstbulk{ 'jms_module_jms_instances':
-    entries_array => $allHieraEntries,
-  }
+  $default_params = {}
+  $jms_queue_instances = hiera('jms_queue_instances', {})
+  create_resources('wls_jms_queue',$jms_queue_instances, $default_params)
 }
-
-class jms_module_foreign_server_objects{
-  require jms_module_objects
-
-  notify { 'class jms_module_foreign_server_objects':} 
-  # lookup all jms_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_foreign_server_instances')
-
-  orawls::utils::wlstbulk{ 'jms_module_foreign_server_objects':
-    entries_array => $allHieraEntries,
-  }
-}
-
-class jms_module_foreign_server_entries_objects{
-  require jms_module_foreign_server_objects
-
-  notify { 'class jms_module_foreign_server_entries_objects':} 
-  # lookup all jms_instances in all hiera files
-  $allHieraEntries = hiera_array('jms_module_foreign_server_objects_instances')
-
-  orawls::utils::wlstbulk{ 'jms_module_foreign_server_objects_instances':
-    entries_array => $allHieraEntries,
-  }
-}
-
 
 class pack_domain{
-  require jms_module_foreign_server_entries_objects
+  require jms_module_objects
 
   notify { 'class pack_domain':} 
   $default_params = {}
