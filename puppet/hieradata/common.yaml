@@ -2,13 +2,10 @@
 messageDefault: 'default'
 messageEnv:     'common'
 
-
 hosts:
   'localhost':
     ip:                "127.0.0.1"
-    host_aliases:      - 'localhost.localdomain'
-                       - 'localhost4'
-                       - 'localhost4.localdomain4'
+    host_aliases:      'localhost.localdomain,localhost4,localhost4.localdomain4'
   'adminsol.example.com':
     ip:                "10.10.10.10"
     host_aliases:      - 'adminsol'
@@ -33,6 +30,8 @@ wls_download_dir:         &wls_download_dir         "/data/install"
 wls_source:               &wls_source               "/software"
 wls_jdk_home_dir:         &wls_jdk_home_dir         "/usr/jdk/jdk1.7.0_45"
 wls_log_dir:              &wls_log_dir              "/data/logs"
+
+wls_jsse_enabled:         false
 
 
 #WebLogic installation variables 

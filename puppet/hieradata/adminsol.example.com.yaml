@@ -41,7 +41,7 @@ nodemanager_instances:
 # startup adminserver for extra configuration
 control_instances:
   'startWLSAdminServer':
-     domain_dir:           "/opt/oracle/middleware12c/user_projects/domains/Wls1212"
+     domain_name:          "Wls1212"
      server_type:          'admin'
      target:               'Server'
      server:               'AdminServer'

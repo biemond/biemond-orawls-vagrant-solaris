@@ -1,13 +1,14 @@
 # orawls.rb
 require 'rexml/document' 
 require 'facter'
+require 'yaml'
 
 def get_weblogicUser()
   weblogicUser = Facter.value('override_weblogic_user')
   if weblogicUser.nil?
-    #puts "weblogic user is oracle"
+    Puppet.debug "orawls.rb weblogic user is oracle"
   else 
-    #puts "weblogic user is " + weblogicUser
+    Puppet.debug "orawls.rb weblogic user is #{weblogicUser}"
     return weblogicUser
   end
   return "oracle"
@@ -111,8 +112,8 @@ end
 
 
 def get_opatch_patches(name)
-    #puts "get_opatch_patches with path: "+name
-    #puts "opatch command: "+get_suCommand()+get_weblogicUser()+" -c '"+name+"/OPatch/opatch lsinventory -patch_id -oh "+name+" -invPtrLoc "+get_oraInvPath()+"/oraInst.loc'"
+    Puppet.debug "orawls.rb get_opatch_patches with path: #{name}"
+    #Puppet.debug "orawls.rb opatch command: "+get_suCommand()+get_weblogicUser()+" -c '"+name+"/OPatch/opatch lsinventory -patch_id -oh "+name+" -invPtrLoc "+get_oraInvPath()+"/oraInst.loc'"
     output3 = Facter::Util::Resolution.exec(get_suCommand()+get_weblogicUser()+" -c '"+name+"/OPatch/opatch lsinventory -patch_id -oh "+name+" -invPtrLoc "+get_oraInvPath()+"/oraInst.loc'")
 
     opatches = "Patches;"
@@ -198,13 +199,13 @@ def get_domain(domain_path,n)
         domain_path
       end
     end
+    Puppet.debug "orawls.rb #{prefix}_domain_#{n} #{domain_path}"
 
     Facter.add("#{prefix}_domain_#{n}_name") do
       setcode do
         root.elements['name'].text
       end
     end
-
         
     file = File.read( domainfile)
     doc = REXML::Document.new file
@@ -299,7 +300,7 @@ def get_domain(domain_path,n)
          coherence_clusters
        end
     end
-          
+
     bpmTargets  = nil
     soaTargets  = nil
     osbTargets  = nil
@@ -336,6 +337,7 @@ def get_domain(domain_path,n)
           bpmTargets
         end
       end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_bpm #{bpmTargets}"
     else
       Facter.add("#{prefix}_domain_#{n}_bpm") do
         setcode do
@@ -349,6 +351,7 @@ def get_domain(domain_path,n)
           soaTargets
         end
       end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_soa #{soaTargets}"
     else
       Facter.add("#{prefix}_domain_#{n}_soa") do
         setcode do
@@ -362,6 +365,7 @@ def get_domain(domain_path,n)
           bamTargets
         end
       end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_bam #{bamTargets}"
     else
       Facter.add("#{prefix}_domain_#{n}_bam") do
         setcode do
@@ -375,6 +379,7 @@ def get_domain(domain_path,n)
           osbTargets
         end
       end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_osb #{osbTargets}"
     else
       Facter.add("#{prefix}_domain_#{n}_osb") do
         setcode do
@@ -550,11 +555,30 @@ def get_domain(domain_path,n)
     end
 
 
-
-    libraries = ""
+    jrfTargets  = nil
+    libraries   = ""
     root.elements.each("library") do |libs|
       libraries += libs.elements['name'].text + ";"
+      if libs.elements['name'].text == "adf.oracle.domain#1.0@11.1.1.2.0" 
+         jrfTargets = libs.elements['target'].text
+      end 
+
     end
+    unless jrfTargets.nil?
+      Facter.add("#{prefix}_domain_#{n}_jrf") do
+        setcode do
+          jrfTargets
+        end
+      end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_jrf #{jrfTargets}"
+    else
+      Facter.add("#{prefix}_domain_#{n}_jrf") do
+        setcode do
+          "NotFound"
+        end
+      end
+      Puppet.debug "orawls.rb #{prefix}_domain_#{n}_jrf NotFound"
+    end  
 
     Facter.add("#{prefix}_domain_#{n}_libraries") do
        setcode do
@@ -743,6 +767,12 @@ oraProducts   = get_orainst_products(oraInstPath)
 mdw11gHomes   = get_middleware_1036_Home
 mdw12cHomes   = get_middleware_1212_Home(oraProducts)
 
+Puppet.debug "orawls.rb oraInstPath #{oraInstPath}"
+Puppet.debug "orawls.rb oraProducts #{oraProducts}"
+Puppet.debug "orawls.rb mdw11gHomes #{mdw11gHomes}"
+Puppet.debug "orawls.rb mdw12cHomes #{mdw12cHomes}"
+
+
 # report all oracle homes / domains
 count = -1
 unless mdw11gHomes.nil?
@@ -774,42 +804,36 @@ end
 
 count_domains = -1
 
-def get_domains(domains_folder,count_domains)
+def get_domains(domain_folder,count_domains)
   # check all domain in a domains folder
-  if FileTest.exists?(domains_folder)
-    output2 = Facter::Util::Resolution.exec('/bin/ls '+domains_folder)
-    unless output2.nil?
-      output2.split(/\r?\n/).each_with_index do |domain, n|
-        count_domains += 1
-        # add domain facts
-        get_domain(domains_folder+'/'+domain,count_domains)
-        # add a full path domain fact
-        Facter.add("ora_mdw_domain_#{count_domains}") do
-          setcode do
-            domains_folder+'/'+domain
-          end
-        end
+  if FileTest.exists?(domain_folder)
+    count_domains += 1
+    # add domain facts
+    get_domain(domain_folder,count_domains)
+    # add a full path domain fact
+    Facter.add("ora_mdw_domain_#{count_domains}") do
+      setcode do
+        domain_folder
       end
-    end   
-    # return the domain counter
-  end  
+    end
+  end
   return count_domains
 end
 
-#get all domains
-unless mdw11gHomes.nil?
-  mdw11gHomes.each_with_index do |mdw, i|
-    count_domains = get_domains(mdw+'/user_projects/domains',count_domains)
-  end 
-end
-unless mdw12cHomes.nil?
-  mdw12cHomes.each_with_index do |mdw, i|
-    count_domains = get_domains(mdw+'/user_projects/domains',count_domains)
-  end 
-end
-domainFolder = Facter.value('override_weblogic_domain_folder')
-unless domainFolder.nil?
-  count_domains = get_domains(domainFolder+'/domains',count_domains)
+# read the domains yaml and analyze domain
+begin
+  entries = YAML.load(File.open("/etc/wls_domains.yaml"))
+  unless entries.nil?
+    domains = entries['domains']
+    unless domains.nil?
+      domains.each { |key, values|
+        Puppet.debug "found #{key} with path #{values}"
+        count_domains = get_domains(values,count_domains)
+      }  
+    end  
+  end
+rescue Exception
+  Puppet.debug "/etc/wls_domains.yaml not found"
 end
 
 Facter.add("ora_mdw_domain_cnt") do
@@ -835,6 +859,7 @@ Facter.add("ora_mdw_homes") do
     mdw_home_str
   end
 end 
+Puppet.debug "orawls.rb ora_mdw_homes #{mdw_home_str}"
 
 # all home counter
 mdw_count = 0
@@ -850,6 +875,7 @@ Facter.add("ora_mdw_cnt") do
     mdw_count
   end
 end
+Puppet.debug "orawls.rb ora_mdw_cnt #{mdw_count}"
 
 # get orainst loc data
 Facter.add("ora_inst_loc_data") do

@@ -7,10 +7,11 @@
 #  wlsTarget     = Server|Cluster
 #
 define orawls::control (
+  $middleware_home_dir        = hiera('wls_middleware_home_dir'   , undef), # /opt/oracle/middleware11gR1
   $weblogic_home_dir          = hiera('wls_weblogic_home_dir'     , undef),
   $jdk_home_dir               = hiera('wls_jdk_home_dir'          , undef), # /usr/java/jdk1.7.0_45
+  $wls_domains_dir            = hiera('wls_domains_dir'           , undef),
   $domain_name                = hiera('domain_name'               , undef),
-  $domain_dir                 = undef,
   $server_type                = 'admin',  # admin|managed
   $target                     = 'Server', # Server|Cluster
   $server                     = 'AdminServer',
@@ -20,12 +21,21 @@ define orawls::control (
   $action                     = 'start', # start|stop
   $weblogic_user              = hiera('wls_weblogic_user'         , "weblogic"),
   $weblogic_password          = hiera('domain_wls_password'       , undef),
+  $jsse_enabled               = hiera('wls_jsse_enabled'          , false),
   $os_user                    = hiera('wls_os_user'               , undef), # oracle
   $os_group                   = hiera('wls_os_group'              , undef), # dba
   $download_dir               = hiera('wls_download_dir'          , undef), # /data/install
   $log_output                 = false, # true|false
 )
 {
+  if ( $wls_domains_dir == undef ) {
+    $domains_dir = "${middleware_home_dir}/user_projects/domains"
+  } else {
+    $domains_dir =  $wls_domains_dir 
+  }
+
+  $domain_dir = "${domains_dir}/${domain_name}"
+  
   case $::kernel {
     Linux: {
       $checkCommand   = "/bin/ps -ef | grep -v grep | /bin/grep 'weblogic.Name=${server}' | /bin/grep ${domain_name}"
@@ -38,11 +48,17 @@ define orawls::control (
       $java_statement = "java -d64"
     }
   }
-  $javaCommand = "${java_statement} -Dweblogic.security.SSL.ignoreHostnameVerification=true weblogic.WLST -skipWLSModuleScanning "
+
+  if $jsse_enabled == true {
+    $javaCommand = "${java_statement} -Dweblogic.ssl.JSSEEnabled=true -Dweblogic.security.SSL.enableJSSE=true -Dweblogic.security.SSL.ignoreHostnameVerification=true weblogic.WLST -skipWLSModuleScanning "
+  } else {
+    $javaCommand = "${java_statement} -Dweblogic.security.SSL.ignoreHostnameVerification=true weblogic.WLST -skipWLSModuleScanning "
+  }
+
   $exec_path   = "${jdk_home_dir}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:"
 
   Exec {
-     logoutput => $log_output,
+    logoutput => $log_output,
   }
 
   if $server_type == 'admin' {
@@ -65,12 +81,12 @@ define orawls::control (
 
   # the py script used by the wlst
   file { "${download_dir}/${title}${script}":
+    ensure  => present,
     path    => "${download_dir}/${title}${script}",
     content => template("orawls/wlst/${script}.erb"),
-    ensure  => present,
     backup  => false,
     replace => true,
-    mode    => 0775,
+    mode    => '0775',
     owner   => $os_user,
     group   => $os_group,
   }
