@@ -37,16 +37,19 @@ define orawls::control (
   $domain_dir = "${domains_dir}/${domain_name}"
   
   case $::kernel {
-    Linux: {
+    'Linux': {
       $checkCommand   = "/bin/ps -ef | grep -v grep | /bin/grep 'weblogic.Name=${server}' | /bin/grep ${domain_name}"
       $nativeLib      = "linux/x86_64"
       $java_statement = "java"
     }
-    SunOS: {
+    'SunOS': {
       $checkCommand   = "/usr/ucb/ps wwxa | grep -v grep | /bin/grep 'weblogic.Name=${server}' | /bin/grep ${domain_name}"
       $nativeLib      = "solaris/x64"
       $java_statement = "java -d64"
     }
+    default: {
+      fail("Unrecognized operating system ${::kernel}, please use it on a Linux host")
+    }    
   }
 
   if $jsse_enabled == true {
@@ -94,7 +97,8 @@ define orawls::control (
   if $action == 'start' {
     exec { "execwlst ${title}${script} ":
       command     => "${javaCommand} ${download_dir}/${title}${script} ${weblogic_password}",
-      environment => ["CLASSPATH=${weblogic_home_dir}/server/lib/weblogic.jar", "JAVA_HOME=${jdk_home_dir}"],
+      environment => ["CLASSPATH=${weblogic_home_dir}/server/lib/weblogic.jar", 
+                      "JAVA_HOME=${jdk_home_dir}"],
       unless      => $checkCommand,
       require     => File["${download_dir}/${title}${script}"],
       path        => $exec_path,
@@ -105,7 +109,8 @@ define orawls::control (
   } elsif $action == 'stop' {
     exec { "execwlst ${title}${script} ":
       command     => "${javaCommand} ${download_dir}/${title}${script} ${weblogic_password}",
-      environment => ["CLASSPATH=${weblogic_home_dir}/server/lib/weblogic.jar", "JAVA_HOME=${jdk_home_dir}"],
+      environment => ["CLASSPATH=${weblogic_home_dir}/server/lib/weblogic.jar",
+                      "JAVA_HOME=${jdk_home_dir}"],
       onlyif      => $checkCommand,
       require     => File["${download_dir}/${title}${script}"],
       path        => $exec_path,

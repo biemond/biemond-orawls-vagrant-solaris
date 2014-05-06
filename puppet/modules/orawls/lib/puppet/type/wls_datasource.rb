@@ -17,7 +17,8 @@ module Puppet
   
     to_get_raw_resources do
       Puppet.info "index #{name}"
-      wlst template('puppet:///modules/orawls/providers/wls_datasource/index.py.erb', binding)
+      environment = { "action"=>"index","type"=>"wls_datasource"}
+      wlst template('puppet:///modules/orawls/providers/wls_datasource/index.py.erb', binding), environment
     end
 
     on_create  do | command_builder |
@@ -35,7 +36,49 @@ module Puppet
       template('puppet:///modules/orawls/providers/wls_datasource/destroy.py.erb', binding)
     end
 
+    def self.title_patterns
+      # possible values for /^((.*\/)?(.*)?)$/
+      # default/testuser1 with this as regex outcome 
+      #    default/testuser1 default/ testuser1
+      # testuser1 with this as regex outcome
+      #    testuser1  nil  testuser1
+      identity  = lambda {|x| x}
+      name      = lambda {|x| 
+          if x.include? "/"
+            x            # it contains a domain
+          else
+            'default/'+x # add the default domain
+          end
+        }
+      optional  = lambda{ |x| 
+          if x.nil?
+            'default' # when not found use default
+          else
+            x[0..-2]  # remove the last char / from domain name
+          end
+        }
+      [
+        [
+          /^((.*\/)?(.*)?)$/,
+          [
+            [ :name           , name     ],
+            [ :domain         , optional ],
+            [ :datasource_name, identity ]
+          ]
+        ],
+        [
+          /^([^=]+)$/,
+          [
+            [ :name, identity ]
+          ]
+        ]
+      ]
+    end
+
+    parameter :domain
     parameter :name
+    parameter :datasource_name
+
     parameter :password
     property  :target
     property  :targettype
@@ -50,64 +93,5 @@ module Puppet
     property  :extrapropertiesvalues
     property  :maxcapacity
     property  :initialcapacity
-
-  private 
-
-    def target
-      self[:target]
-    end
-
-    def password
-      self[:password]
-    end
-
-    def targettype
-      self[:targettype]
-    end
-
-    def jndinames
-      self[:jndinames]
-    end
-
-    def drivername
-      self[:drivername]
-    end
-
-    def url
-      self[:url]
-    end
-
-    def usexa
-      self[:usexa]
-    end
-
-    def user
-      self[:user]
-    end
-
-    def testtablename
-      self[:testtablename]
-    end
-
-    def globaltransactionsprotocol
-      self[:globaltransactionsprotocol]
-    end 
-
-    def extraproperties
-       self[:extraproperties]
-    end 
-
-    def extrapropertiesvalues
-       self[:extrapropertiesvalues]
-    end  
-
-    def maxcapacity
-       self[:maxcapacity]
-    end 
-
-    def initialcapacity
-       self[:initialcapacity]
-    end  
-
   end
 end

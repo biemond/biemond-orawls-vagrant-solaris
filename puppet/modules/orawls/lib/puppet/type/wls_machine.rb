@@ -1,6 +1,4 @@
 require 'pathname'
-$:.unshift(Pathname.new(__FILE__).dirname.parent.parent)
-$:.unshift(Pathname.new(__FILE__).dirname.parent.parent.parent.parent + 'easy_type' + 'lib')
 require 'easy_type'
 require 'utils/wls_access'
 require 'utils/settings'
@@ -20,7 +18,8 @@ module Puppet
   
     to_get_raw_resources do
       Puppet.info "index #{name} "
-      wlst template('puppet:///modules/orawls/providers/wls_machine/index.py.erb', binding)
+      environment = { "action"=>"index","type"=>"wls_machine"}
+      wlst template('puppet:///modules/orawls/providers/wls_machine/index.py.erb', binding), environment
     end
 
     on_create  do | command_builder |
@@ -38,31 +37,53 @@ module Puppet
       template('puppet:///modules/orawls/providers/wls_machine/destroy.py.erb', binding)
     end
 
-    include_file 'puppet/type/wls_setting/setting'
 
+    def self.title_patterns
+      # possible values for /^((.*\/)?(.*)?)$/
+      # default/testuser1 with this as regex outcome 
+      #    default/testuser1 default/ testuser1
+      # testuser1 with this as regex outcome
+      #    testuser1  nil  testuser1
+      identity  = lambda {|x| x}
+      name      = lambda {|x| 
+          if x.include? "/"
+            x            # it contains a domain
+          else
+            'default/'+x # add the default domain
+          end
+        }
+      optional  = lambda{ |x| 
+          if x.nil?
+            'default' # when not found use default
+          else
+            x[0..-2]  # remove the last char / from domain name
+          end
+        }
+      [
+        [
+          /^((.*\/)?(.*)?)$/,
+          [
+            [ :name        , name     ],
+            [ :domain      , optional ],
+            [ :machine_name, identity ]
+          ]
+        ],
+        [
+          /^([^=]+)$/,
+          [
+            [ :name, identity ]
+          ]
+        ]
+      ]
+    end
+
+    parameter :domain
     parameter :name
+    parameter :machine_name
+
     property  :machinetype
     property  :nmtype
     property  :listenaddress
     property  :listenport
-
-  private 
-
-    def listenaddress
-      self[:listenaddress]
-    end
-
-    def listenport
-      self[:listenport]
-    end
-
-    def machinetype
-      self[:machinetype]
-    end
-
-    def nmtype
-      self[:nmtype]
-    end
-
   end
 end

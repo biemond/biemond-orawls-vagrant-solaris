@@ -99,17 +99,17 @@ cluster_instances:
         servers:        'wlsServer1,wlsServer2'
 
 jmsserver_instances:
-   jmsServer1:
+   'jmsServer1':
      ensure:              'present'
      target:              'wlsServer1'
      targettype:          'Server'
-   jmsServer2:
+   'jmsServer2':
      ensure:              'present'
      target:              'wlsServer2'
      targettype:          'Server'
 
 jms_module_instances:
-   jmsClusterModule:
+   'jmsClusterModule':
      ensure:      'present'
      target:      'WebCluster'
      targettype:  'Cluster'

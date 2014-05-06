@@ -17,7 +17,8 @@ module Puppet
   
     to_get_raw_resources do
       Puppet.info "index #{name}"
-      wlst template('puppet:///modules/orawls/providers/wls_cluster/index.py.erb', binding)
+      environment = { "action"=>"index","type"=>"wls_cluster"}
+      wlst template('puppet:///modules/orawls/providers/wls_cluster/index.py.erb', binding), environment
     end
 
     on_create  do | command_builder |
@@ -35,24 +36,56 @@ module Puppet
       template('puppet:///modules/orawls/providers/wls_cluster/destroy.py.erb', binding)
     end
 
+    def self.title_patterns
+      # possible values for /^((.*\/)?(.*)?)$/
+      # default/testuser1 with this as regex outcome 
+      #    default/testuser1 default/ testuser1
+      # testuser1 with this as regex outcome
+      #    testuser1  nil  testuser1
+      identity  = lambda {|x| x}
+      name      = lambda {|x| 
+          if x.include? "/"
+            x            # it contains a domain
+          else
+            'default/'+x # add the default domain
+          end
+        }
+      optional  = lambda{ |x| 
+          if x.nil?
+            'default' # when not found use default
+          else
+            x[0..-2]  # remove the last char / from domain name
+          end
+        }
+      [
+        [
+          /^((.*\/)?(.*)?)$/,
+          [
+            [ :name        , name     ],
+            [ :domain      , optional ],
+            [ :cluster_name, identity ]
+          ]
+        ],
+        [
+          /^([^=]+)$/,
+          [
+            [ :name, identity ]
+          ]
+        ]
+      ]
+    end
+
+    parameter :domain
     parameter :name
+    parameter :cluster_name
     property  :servers
     property  :migrationbasis
+    property  :migration_datasource
+    property  :migration_table_name
     property  :messagingmode
-
-  private 
-
-    def servers
-      self[:servers]
-    end
-
-    def migrationbasis
-      self[:migrationbasis]
-    end
-
-    def messagingmode
-      self[:messagingmode]
-    end
-
+    property  :datasourceforjobscheduler
+    property  :unicastbroadcastchannel
+    property  :multicastaddress
+    property  :multicastport
   end
 end

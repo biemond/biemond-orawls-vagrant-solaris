@@ -17,7 +17,8 @@ module Puppet
   
     to_get_raw_resources do
       Puppet.info "index #{name}"
-      wlst template('puppet:///modules/orawls/providers/wls_saf_error_handler/index.py.erb', binding)
+      environment = { "action"=>"index","type"=>"wls_saf_error_handler"}
+      wlst template('puppet:///modules/orawls/providers/wls_saf_error_handler/index.py.erb', binding), environment
     end
 
     on_create  do | command_builder |
@@ -36,14 +37,34 @@ module Puppet
     end
 
     def self.title_patterns
-      identity = lambda {|x| x}
+      # possible values for /^((.*\/)?(.*):(.*)?)$/
+      # default/server1:channel1 with this as regex outcome 
+      #    default/server1:channel1  default/ server1 channel1
+      # server1:channel1 with this as regex outcome
+      #    server1  nil  server1 channel1
+      identity  = lambda {|x| x}
+      name      = lambda {|x| 
+          if x.include? "/"
+            x            # it contains a domain
+          else
+            'default/'+x # add the default domain
+          end
+        }
+      optional  = lambda{ |x| 
+          if x.nil?
+            'default' # when not found use default
+          else
+            x[0..-2]  # remove the last char / from domain name
+          end
+        }
       [
         [
-          /^((.*):(.*))$/,
+          /^((.*\/)?(.*):(.*)?)$/,
           [
-            [ :name, identity ],
-            [ :jmsmodule, identity ],
-            [ :error_handler_name, identity ]
+            [ :name                , name     ],
+            [ :domain              , optional ],
+            [ :jmsmodule           , identity ],
+            [ :error_handler_name  , identity ]
           ]
         ],
         [
@@ -55,34 +76,12 @@ module Puppet
       ]
     end
 
+    parameter :domain
     parameter :name
     parameter :jmsmodule
     parameter :error_handler_name
     property  :errordestination
     property  :logformat
     property  :policy
-
-  private 
-
-    def error_handler_name
-       self[:error_handler_name]
-    end
-
-    def jmsmodule
-       self[:jmsmodule]
-    end
-
-    def errordestination
-       self[:errordestination]
-    end
-
-    def logformat
-       self[:logformat]
-    end
-
-    def policy
-       self[:policy]
-    end
-
   end
 end

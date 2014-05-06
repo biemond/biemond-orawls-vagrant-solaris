@@ -17,7 +17,8 @@ module Puppet
   
     to_get_raw_resources do
       Puppet.info "index #{name}"
-      wlst template('puppet:///modules/orawls/providers/wls_jms_connection_factory/index.py.erb', binding)
+      environment = { "action"=>"index","type"=>"wls_jms_connection_factory"}
+      wlst template('puppet:///modules/orawls/providers/wls_jms_connection_factory/index.py.erb', binding), environment
     end
 
     on_create  do | command_builder |
@@ -36,14 +37,34 @@ module Puppet
     end
 
     def self.title_patterns
-      identity = lambda {|x| x}
+      # possible values for /^((.*\/)?(.*):(.*)?)$/
+      # default/server1:channel1 with this as regex outcome 
+      #    default/server1:channel1  default/ server1 channel1
+      # server1:channel1 with this as regex outcome
+      #    server1  nil  server1 channel1
+      identity  = lambda {|x| x}
+      name      = lambda {|x| 
+          if x.include? "/"
+            x            # it contains a domain
+          else
+            'default/'+x # add the default domain
+          end
+        }
+      optional  = lambda{ |x| 
+          if x.nil?
+            'default' # when not found use default
+          else
+            x[0..-2]  # remove the last char / from domain name
+          end
+        }
       [
         [
-          /^((.*):(.*))$/,
+          /^((.*\/)?(.*):(.*)?)$/,
           [
-            [ :name, identity ],
-            [ :jmsmodule, identity ],
-            [ :connection_factory_name, identity ]
+            [ :name                     , name     ],
+            [ :domain                   , optional ],
+            [ :jmsmodule                , identity ],
+            [ :connection_factory_name  , identity ]
           ]
         ],
         [
@@ -55,6 +76,7 @@ module Puppet
       ]
     end
 
+    parameter :domain
     parameter :name
     parameter :jmsmodule
     parameter :connection_factory_name
@@ -63,36 +85,5 @@ module Puppet
     property  :defaulttargeting
     property  :transactiontimeout
     property  :xaenabled
-
-  private 
-
-    def connection_factory_name
-       self[:connection_factory_name]
-    end
-
-    def jmsmodule
-       self[:jmsmodule]
-    end
-
-    def transactiontimeout
-       self[:transactiontimeout]
-    end
-
-    def xaenabled
-       self[:xaenabled]
-    end
-
-    def jndiname
-       self[:jndiname]
-    end
-
-    def subdeployment
-       self[:subdeployment]
-    end
-
-    def defaulttargeting
-       self[:defaulttargeting]
-    end
-
   end
 end

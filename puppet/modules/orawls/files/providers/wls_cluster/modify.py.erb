@@ -1,9 +1,25 @@
-connect('<%= weblogicUser %>','<%= weblogicPassword %>'  ,'<%= weblogicConnectUrl %>')
+weblogicUser         = sys.argv[1] 
+weblogicPassword     = sys.argv[2] 
+weblogicConnectUrl   = sys.argv[3] 
 
-name                 = '<%= name %>'
-clusterNodesTargets  = String('<%= servers %>').split(",")
-messagingmode        = '<%= messagingmode %>'
-migrationbasis       = '<%= migrationbasis %>'
+# check the domain else we need to skip this (done in wls_access.rb)
+real_domain='<%= domain %>'
+
+connect(weblogicUser,weblogicPassword,weblogicConnectUrl)
+
+name                      = '<%= cluster_name %>'
+clusterNodesTargets       = String('<%= servers %>').split(",")
+messagingmode             = '<%= messagingmode %>'
+migrationbasis            = '<%= migrationbasis %>'
+migration_table_name      = '<%= migration_table_name %>'
+migration_datasource      = '<%= migration_datasource %>'
+
+
+datasourceforjobscheduler = '<%= datasourceforjobscheduler %>'
+
+unicastbroadcastchannel   = '<%= unicastbroadcastchannel %>'
+multicastaddress          = '<%= multicastaddress %>'
+multicastport             = '<%= multicastport %>'
 
 edit()
 startEdit()
@@ -16,7 +32,26 @@ try:
 
     cd('/Clusters/'+name)
     cmo.setClusterMessagingMode(messagingmode)
+
     cmo.setMigrationBasis(migrationbasis)
+    if migrationbasis == 'database':
+      cmo.setDataSourceForAutomaticMigration(getMBean('/SystemResources/'+migration_datasource))
+
+      if migration_table_name:
+         cmo.setAutoMigrationTableName(migration_table_name)
+
+
+    if unicastbroadcastchannel:
+       cmo.setClusterBroadcastChannel(unicastbroadcastchannel)
+
+    if multicastaddress:
+       cmo.setMulticastAddress(multicastaddress)
+
+    if multicastport:
+      cmo.setMulticastPort(multicastport)
+
+    if datasourceforjobscheduler:
+      cmo.setDataSourceForJobScheduler(getMBean('/SystemResources/'+datasourceforjobscheduler))   
 
     for node in clusterNodesTargets:
       cd('/Servers/'+node)
@@ -24,10 +59,6 @@ try:
 
     save()
     activate()          
-
-    # still required cause of easy_type module
-    f = open("/tmp/wlstScript.out", "w")
-    f.close()
 
 except:
     print "Unexpected error:", sys.exc_info()[0]

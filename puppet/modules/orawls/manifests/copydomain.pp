@@ -10,7 +10,7 @@ define orawls::copydomain (
   $wls_domains_dir            = hiera('wls_domains_dir'           , undef),
   $wls_apps_dir               = hiera('wls_apps_dir'              , undef),
   $domain_name                = hiera('domain_name'               , undef),
-  $adminserver_address        = hiera('domain_adminserver_address', "localhost"),
+  $adminserver_address        = hiera('domain_adminserver_address', undef),
   $adminserver_port           = hiera('domain_adminserver_port'   , 7001),
   $userConfigFile             = hiera('domain_user_config_file'   , undef),
   $userKeyFile                = hiera('domain_user_key_file'      , undef),
@@ -152,6 +152,12 @@ define orawls::copydomain (
       timeout   => 0, 
       require   => [File[$domains_dir],
                     Exec["copy domain jar ${domain_name}"]],
+    }
+
+    yaml_setting { "domain ${title}":
+      target =>  "/etc/wls_domains.yaml",
+      key    =>  "domains/${domain_name}",
+      value  =>  "${domains_dir}/${domain_name}",
     }
 
     # the enroll domain.py used by the wlst
