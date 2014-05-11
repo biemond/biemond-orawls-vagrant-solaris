@@ -18,7 +18,7 @@ Many thanks to Bert Hajee (hajee) for his contributions, help and the his easy_t
 Should work for all Linux & Solaris versions like RedHat, CentOS, Ubuntu, Debian, Suse SLES, OracleLinux, Solaris 10 sparc / x86  
 
 Dependency with 
-- hajee/easy_type >= 0.6.2
+- hajee/easy_type (latest)
 - adrien/filemapper >= 1.1.1
 - reidmv/yamlfile >=0.2.0
 
@@ -120,6 +120,9 @@ all templates creates a WebLogic domain, logs the domain creation output
 - domain 'osb_soa_bpm' -> OSB + SOA Suite + BAM + BPM + JRF + EM + OWSM 
 - domain 'soa'         -> SOA Suite + BAM + JRF + EM + OWSM 
 - domain 'soa_bpm'     -> SOA Suite + BAM + BPM + JRF + EM + OWSM 
+- domain 'wc_wcc_bpm'  -> WC (webcenter) + WCC ( Content ) + BPM + JRF + EM + OWSM 
+- domain 'wc'          -> WC (webcenter) + JRF + EM + OWSM 
+
 
 ## Orawls WebLogic Facter
 

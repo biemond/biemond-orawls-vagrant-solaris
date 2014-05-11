@@ -9,6 +9,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "adminsol" , primary: true do |adminsol|
     adminsol.vm.box = "solaris10-x86_64"
     adminsol.vm.box_url = "https://dl.dropboxusercontent.com/s/an5bthwroh1i8k5/solaris10-x86_64.box"
+    #adminsol.vm.box_url = "/Users/edwin/projects/packer-vagrant-builder/build/solaris10-x86_64.box"
+    #adminsol.vm.box = "solaris11-x86_64"
+    #adminsol.vm.box_url = "/Users/edwin/projects/packer-vagrant-builder/build/solaris11-x86_64.box"
 
     adminsol.vm.hostname = "adminsol.example.com"
   
