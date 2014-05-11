@@ -12,6 +12,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #adminsol.vm.box_url = "/Users/edwin/projects/packer-vagrant-builder/build/solaris10-x86_64.box"
     #adminsol.vm.box = "solaris11-x86_64"
     #adminsol.vm.box_url = "/Users/edwin/projects/packer-vagrant-builder/build/solaris11-x86_64.box"
+    #adminsol.vm.box = "solaris11_2beta-x86_64"
+    #adminsol.vm.box_url = "/Users/edwin/projects/packer-vagrant-builder/build/solaris11_2beta-x86_64.box"
 
     adminsol.vm.hostname = "adminsol.example.com"
   
@@ -21,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     adminsol.vm.network :private_network, ip: "10.10.10.10"
   
     adminsol.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "2048"]
+      vb.customize ["modifyvm", :id, "--memory", "2532"]
       vb.customize ["modifyvm", :id, "--name", "adminsol"]
     end
   
