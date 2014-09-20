@@ -3,7 +3,8 @@ require 'spec_helper'
 describe 'orawls::fmw', :type => :define do
 
   describe "Windows" do
-    let(:params){{:download_dir         => '/install',
+    let(:params){{:version              => 1111,
+                  :download_dir         => '/install',
                   :fmw_product          => 'xxx',
                   :os_user              => 'oracle',
                   :os_group             => 'dba',
@@ -15,6 +16,7 @@ describe 'orawls::fmw', :type => :define do
                   :fmw_file1            => 'file1',
                   :fmw_file2            => 'file2',
                   :source               => '/mnt',
+                  :temp_directory       => '/tmp',
                 }}
     let(:title) {'test'}
     let(:facts) {{ :kernel          => 'Windows',
@@ -26,7 +28,8 @@ describe 'orawls::fmw', :type => :define do
   end
 
   describe "unknown product" do
-    let(:params){{:download_dir         => '/install',
+    let(:params){{:version              => 1111,
+                  :download_dir         => '/install',
                   :fmw_product          => 'xxx',
                   :os_user              => 'oracle',
                   :os_group             => 'dba',
@@ -38,6 +41,7 @@ describe 'orawls::fmw', :type => :define do
                   :fmw_file1            => 'file1',
                   :fmw_file2            => 'file2',
                   :source               => '/mnt',
+                  :temp_directory       => '/tmp',
                 }}
     let(:title) {'test'}
     let(:facts) {{ :operatingsystem => 'CentOS' ,

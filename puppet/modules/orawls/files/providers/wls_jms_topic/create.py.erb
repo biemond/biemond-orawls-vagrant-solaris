@@ -1,11 +1,7 @@
-weblogicUser         = sys.argv[1] 
-weblogicPassword     = sys.argv[2] 
-weblogicConnectUrl   = sys.argv[3] 
-
 # check the domain else we need to skip this (done in wls_access.rb)
 real_domain='<%= domain %>'
 
-connect(weblogicUser,weblogicPassword,weblogicConnectUrl)
+
 
 name                     = '<%= topic_name %>'
 jmsmodule                = '<%= jmsmodule %>'
@@ -17,6 +13,7 @@ quota                    = '<%= quota %>'
 defaulttargeting         = '<%= defaulttargeting %>'
 redeliverylimit          = '<%= redeliverylimit %>'
 expirationpolicy         = '<%= expirationpolicy %>'
+errordestinationtype     = '<%= errordestinationtype %>'
 errordestination         = '<%= errordestination %>'
 expirationloggingpolicy  = '<%= expirationloggingpolicy %>'
 timetolive               = '<%= timetolive %>'
@@ -49,7 +46,7 @@ try:
       print "distributed"
       cmo.setLoadBalancingPolicy(balancingpolicy)
 
-    if expirationpolicy :
+    if expirationpolicy:
       cd('/JMSSystemResources/'+jmsmodule+'/JMSResource/'+jmsmodule+jmsWlsType+name+'/DeliveryFailureParams/'+name)
       cmo.setExpirationPolicy(expirationpolicy)
 
@@ -57,11 +54,20 @@ try:
       print "limit"
       cmo.setRedeliveryLimit( int(redeliverylimit) )  
 
-    if errordestination:
+    print "before"
+    if errordestinationtype:
+      jmsErrType = errordestinationtype
+    else:
       if distributed == "1":
-        cmo.setErrorDestination(getMBean('/JMSSystemResources/'+jmsmodule+'/JMSResource/'+jmsmodule+'/UniformDistributedQueues/'+errordestination))
+        jmsErrType = 'UniformDistributedQueues'
       else:
-        cmo.setErrorDestination(getMBean('/JMSSystemResources/'+jmsmodule+'/JMSResource/'+jmsmodule+'/Queues/'+errordestination))
+        jmsErrType = 'Queues'
+
+    print "after"
+ 
+    print "errorbean "+'/JMSSystemResources/'+jmsmodule+'/JMSResource/'+jmsmodule+'/'+jmsErrType+'/'+errordestination 
+    if errordestination:
+        cmo.setErrorDestination(getMBean('/JMSSystemResources/'+jmsmodule+'/JMSResource/'+jmsmodule+'/'+jmsErrType+'/'+errordestination))
 
     if expirationloggingpolicy:
       cmo.setExpirationLoggingPolicy(expirationloggingpolicy)
@@ -90,13 +96,14 @@ try:
 
     save()
     activate()          
+    print "~~~~COMMAND SUCCESFULL~~~~"
 
 except:
     print "Unexpected error:", sys.exc_info()[0]
     undo('true','y')
     stopEdit('y')
+    print "~~~~COMMAND FAILED~~~~"
     raise
 
-disconnect()
-exit()
+
 

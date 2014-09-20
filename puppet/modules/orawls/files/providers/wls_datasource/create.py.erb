@@ -1,11 +1,7 @@
-weblogicUser         = sys.argv[1] 
-weblogicPassword     = sys.argv[2] 
-weblogicConnectUrl   = sys.argv[3] 
-
 # check the domain else we need to skip this (done in wls_access.rb)
 real_domain='<%= domain %>'
 
-connect(weblogicUser,weblogicPassword,weblogicConnectUrl)
+
 
 name                       = '<%= datasource_name %>'
 password                   = '<%= password %>'
@@ -22,6 +18,8 @@ extraproperties            = '<%= extraproperties %>'
 extrapropertiesvalues      = '<%= extrapropertiesvalues %>'
 maxcapacity                = '<%= maxcapacity %>'
 initialcapacity            = '<%= initialcapacity %>'
+fanenabled                 = '<%= fanenabled %>'
+onsnodelist                = '<%= onsnodelist %>'
 
 
 edit()
@@ -35,7 +33,9 @@ try:
     cmo.setName(name)
 
     cd('/JDBCSystemResources/' + name + '/JDBCResource/' + name + '/JDBCDataSourceParams/' + name )
-    set('JNDINames', jarray.array([String(jndinames)], String))
+    if jndinames: 
+      jndis = String(jndinames).split(",")  
+      set('JNDINames',jarray.array(jndis, String))
 
     cd('/JDBCSystemResources/' + name + '/JDBCResource/' + name + '/JDBCDriverParams/' + name )
     cmo.setUrl(url)
@@ -75,6 +75,16 @@ try:
     cd('/JDBCSystemResources/' + name + '/JDBCResource/' + name + '/JDBCDataSourceParams/' + name)
     cmo.setGlobalTransactionsProtocol(globaltransactionsprotocol)
 
+    try:
+        cd('/JDBCSystemResources/' + name + '/JDBCResource/' + name + '/JDBCOracleParams/' + name )
+        if fanenabled == '1':
+            cmo.setFanEnabled(true)
+        else:
+            cmo.setFanEnabled(false)
+        cmo.setOnsNodeList(onsnodelist)
+    except:
+        print "Datasource Driver %s does not support ONS parameters." % drivername
+
     cd('/SystemResources/' + name )
 
     print "target: "     +  target
@@ -91,13 +101,13 @@ try:
 
     save()
     activate()          
+    print "~~~~COMMAND SUCCESFULL~~~~"
 
 except:
     print "Unexpected error:", sys.exc_info()[0]
     undo('true','y')
     stopEdit('y')
+    print "~~~~COMMAND FAILED~~~~"
     raise
 
-disconnect()
-exit()
 

@@ -1,9 +1,4 @@
-weblogicUser         = sys.argv[1] 
-weblogicPassword     = sys.argv[2] 
-weblogicConnectUrl   = sys.argv[3] 
-domain               = sys.argv[4] 
 
-connect(weblogicUser,weblogicPassword,weblogicConnectUrl)
 
 def quote(text):
     if text:
@@ -11,25 +6,20 @@ def quote(text):
     else: 
         return ""
 
-m = ls('/JMSSystemResources')
+m = ls('/JMSSystemResources',returnMap='true')
 
 f = open("/tmp/wlstScript.out", "w")
 print >>f, "name;jmsmodule;bytesmaximum;messagesmaximum;policy;shared;domain"
-for token in m.split("dr--"):
-    token=token.strip().lstrip().rstrip()
-    if token:
-        print '_jmsmodule_'+token+'___'
-        cd('/JMSSystemResources/'+token+'/JMSResource/'+token)
+for token in m:
+    print '_jmsmodule_'+token+'___'
+    cd('/JMSSystemResources/'+token+'/JMSResource/'+token)
 
-        n = ls('Quotas')
-        for token2 in n.split("dr--"):
-            token2=token2.strip().lstrip().rstrip()
-            if not token2 == '':
-                print 'cd(\''+'/JMSSystemResources/'+token+'/JMSResource/'+token+'/Quotas/'+token2+'\')'
-                cd('/JMSSystemResources/'+token+'/JMSResource/'+token+'/Quotas/'+token2)
-                print >>f, ";".join(map(quote, [domain+'/'+token+":"+token2,token,get('BytesMaximum'),get('MessagesMaximum'),get('Policy'),str(get('Shared')),domain]))
+    n = ls('Quotas',returnMap='true')
+    for token2 in n:
+        print 'cd(\''+'/JMSSystemResources/'+token+'/JMSResource/'+token+'/Quotas/'+token2+'\')'
+        cd('/JMSSystemResources/'+token+'/JMSResource/'+token+'/Quotas/'+token2)
+        print >>f, ";".join(map(quote, [domain+'/'+token+":"+token2,token,get('BytesMaximum'),get('MessagesMaximum'),get('Policy'),str(get('Shared')),domain]))
         
 f.close()
+print "~~~~COMMAND SUCCESFULL~~~~"
 
-disconnect()
-exit()
