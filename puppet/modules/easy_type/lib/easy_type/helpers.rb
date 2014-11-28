@@ -2,9 +2,12 @@
 require 'version_differentiator'
 ruby_18 do
   require '1.8.7/csv'
-  CSV = FasterCSV
+  EASY_CSV = FasterCSV
 end
-ruby_19 { require 'csv' }
+ruby_19 { 
+  require 'csv' 
+  EASY_CSV = CSV
+}
 
 module EasyType
   #
@@ -60,12 +63,24 @@ module EasyType
       options = default_options.merge(options)
       skip_lines = options.delete(:skip_lines) { HEADER_LINE_REGEX }
       data = []
-      CSV.parse(csv_data, options) do |row|
+      EASY_CSV.parse(csv_data, options) do |row|
         data << InstancesResults[row.to_a] unless row_contains_skip_line(row, skip_lines)
       end
       data
     end
     # rubocop:enable LineLength
+
+    #
+    # Camelize a string. This code is "borrowed" from RAILS. Credits and copyrights
+    # to them.
+    #
+    def camelize(lower_case_and_underscored_word, first_letter_in_uppercase = true)
+      if first_letter_in_uppercase
+        lower_case_and_underscored_word.to_s.gsub(/\/(.?)/) { "::#{$1.upcase}" }.gsub(/(?:^|_)(.)/) { $1.upcase }
+      else
+        lower_case_and_underscored_word.first.downcase + camelize(lower_case_and_underscored_word)[1..-1]
+      end
+    end
 
     private
 

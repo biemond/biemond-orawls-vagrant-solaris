@@ -1,27 +1,25 @@
-# test
 #
-# one machine setup with weblogic 12.1.2
-# creates an WLS Domain with JAX-WS (advanced, soap over jms)
-# needs jdk7, orawls, orautils, fiddyspence-sysctl, erwbgy-limits puppet modules
-#
-
 node 'adminsol.example.com' {
 
-  
-   include os, ssh
-   include java
-   include orawls::weblogic, orautils
-   include opatch
-   include domains, nodemanager, startwls, userconfig
-   include machines, managed_servers
-   include clusters
-   include jms_servers,jms_saf_agents
-   include jms_modules,jms_module_subdeployments
-   include jms_module_quotas,jms_module_cfs
-   include jms_module_objects
-   include pack_domain
+  include os
+  include ssh
+  include java
+  include orautils
+  include orawls::weblogic
+  include fmw
+  include opatch
+  include domains
+  include nodemanager, startwls, userconfig
+  include security
+  include basic_config
+  include datasources
+  include virtual_hosts
+  include workmanagers
+  include file_persistence
+  include jms
+  include pack_domain
 
-  Class['java'] -> Class['orawls::weblogic']
+  Class[java] -> Class[orawls::weblogic]
 }
 
 
@@ -57,7 +55,7 @@ class os {
 #                 Package['SUNWi1of'],
 #                 Package[$install],
                ],
-    unless  => "projects -l | grep -c ORAWLS",           
+    unless  => "projects -l | grep -c ORAWLS",
     path    => $execPath,
   }
 
@@ -65,15 +63,15 @@ class os {
     command     => "projmod -s -K 'project.max-shm-memory=(privileged,2G,deny)' default",
     require     => Exec["projadd max-shm-memory"],
     subscribe   => Exec["projadd max-shm-memory"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
-  }  
+  }
 
   exec { "projmod default max-file-descriptor":
     command     => "projmod -s -K 'process.max-file-descriptor=(basic,65536,deny)' default",
     require     => Exec["projmod default max-shm-memory"],
     subscribe   => Exec["projmod default max-shm-memory"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -81,7 +79,7 @@ class os {
     command     => "projmod -s -K 'project.max-sem-ids=(privileged,100,deny)' ORAWLS",
     subscribe   => Exec["projmod default max-file-descriptor"],
     require     => Exec["projmod default max-file-descriptor"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -89,7 +87,7 @@ class os {
     command     => "projmod -s -K 'project.max-shm-ids=(privileged,100,deny)' ORAWLS",
     require     => Exec["projmod max-sem-ids"],
     subscribe   => Exec["projmod max-sem-ids"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -97,7 +95,7 @@ class os {
     command     => "projmod -s -K 'process.max-sem-nsems=(privileged,256,deny)' ORAWLS",
     require     => Exec["projmod max-shm-ids"],
     subscribe   => Exec["projmod max-shm-ids"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -105,7 +103,7 @@ class os {
     command     => "projmod -s -K 'process.max-file-descriptor=(basic,65536,deny)' ORAWLS",
     require     => Exec["projmod max-sem-nsems"],
     subscribe   => Exec["projmod max-sem-nsems"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -113,7 +111,7 @@ class os {
     command     => "projmod -s -K 'process.max-stack-size=(privileged,32MB,deny)' ORAWLS",
     require     => Exec["projmod max-file-descriptor"],
     subscribe   => Exec["projmod max-file-descriptor"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -121,7 +119,7 @@ class os {
     command     => "usermod -K project=ORAWLS oracle",
     require     => Exec["projmod max-stack-size"],
     subscribe   => Exec["projmod max-stack-size"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -146,7 +144,7 @@ class os {
     command => "ndd -set /dev/udp udp_largest_anon_port 65500",
     require => Exec["ndd 3"],
     path    => $execPath,
-  }    
+  }
 
   exec { "ulimit -S":
     command => "ulimit -S -n 4096",
@@ -158,7 +156,7 @@ class os {
     command => "ulimit -H -n 65536",
     require => Exec["ulimit -S"],
     path    => $execPath,
-  }  
+  }
 
 
 
@@ -177,7 +175,7 @@ class ssh {
     ensure => "directory",
     alias  => "oracle-ssh-dir",
   }
-  
+
   file { "/export/home/oracle/.ssh/id_rsa.pub":
     ensure  => present,
     owner   => "oracle",
@@ -186,7 +184,7 @@ class ssh {
     source  => "/vagrant/ssh/id_rsa.pub",
     require => File["oracle-ssh-dir"],
   }
-  
+
   file { "/export/home/oracle/.ssh/id_rsa":
     ensure  => present,
     owner   => "oracle",
@@ -195,7 +193,7 @@ class ssh {
     source  => "/vagrant/ssh/id_rsa",
     require => File["oracle-ssh-dir"],
   }
-  
+
   file { "/export/home/oracle/.ssh/authorized_keys":
     ensure  => present,
     owner   => "oracle",
@@ -203,7 +201,7 @@ class ssh {
     mode    => "644",
     source  => "/vagrant/ssh/id_rsa.pub",
     require => File["oracle-ssh-dir"],
-  }        
+  }
 }
 
 class java {
@@ -211,20 +209,25 @@ class java {
 
   notice 'class java'
 
-  jdksolaris::install7{'jdk1.7.0_45':
-    version              => '7u45',
-    fullVersion          => 'jdk1.7.0_45',
+  jdksolaris::install7{'jdk1.7.0_71':
+    version              => '7u71',
+    fullVersion          => 'jdk1.7.0_71',
     x64                  => true,
-    downloadDir          => '/data/install',
+    downloadDir          => '/var/tmp/install',
     sourcePath           => "/software",
-  }  
+  }
 
 }
 
-class opatch{
-  require orawls::weblogic
 
-  notice 'class opatch'
+class fmw{
+  $default_params = {}
+  $fmw_installations = hiera('fmw_installations', {})
+  create_resources('orawls::fmw',$fmw_installations, $default_params)
+}
+
+class opatch{
+  require fmw,orawls::weblogic
   $default_params = {}
   $opatch_instances = hiera('opatch_instances', {})
   create_resources('orawls::opatch',$opatch_instances, $default_params)
@@ -233,145 +236,185 @@ class opatch{
 class domains{
   require orawls::weblogic, opatch
 
-  notice 'class domains'
   $default_params = {}
   $domain_instances = hiera('domain_instances', {})
   create_resources('orawls::domain',$domain_instances, $default_params)
 
-  $domain_address = hiera('domain_adminserver_address')
-  $domain_port    = hiera('domain_adminserver_port')
+  $wls_setting_instances = hiera('wls_setting_instances', {})
+  create_resources('wls_setting',$wls_setting_instances, $default_params)
 
-  wls_setting { 'default':
-    user               => hiera('wls_os_user'),
-    weblogic_home_dir  => hiera('wls_weblogic_home_dir'),
-    connect_url        => "t3://${domain_address}:${domain_port}",
-    weblogic_user      => hiera('wls_weblogic_user'),
-    weblogic_password  => hiera('domain_wls_password'),
-  }
 }
 
 class nodemanager {
   require orawls::weblogic, domains
 
-  notify { 'class nodemanager':} 
   $default_params = {}
   $nodemanager_instances = hiera('nodemanager_instances', {})
   create_resources('orawls::nodemanager',$nodemanager_instances, $default_params)
+
+  $str_version  = hiera('wls_version')
+  $domains_path = hiera('wls_domains_dir')
+  $domain_name  = hiera('domain_name')
+
 }
 
 class startwls {
   require orawls::weblogic, domains,nodemanager
 
-
-  notify { 'class startwls':} 
   $default_params = {}
   $control_instances = hiera('control_instances', {})
   create_resources('orawls::control',$control_instances, $default_params)
 }
 
 class userconfig{
-  require orawls::weblogic, domains, nodemanager, startwls 
-
-  notify { 'class userconfig':} 
+  require orawls::weblogic, domains, nodemanager, startwls
   $default_params = {}
   $userconfig_instances = hiera('userconfig_instances', {})
   create_resources('orawls::storeuserconfig',$userconfig_instances, $default_params)
-} 
+}
 
-class machines{
+
+class security{
   require userconfig
-
-  notify { 'class machines':} 
   $default_params = {}
+  $user_instances = hiera('user_instances', {})
+  create_resources('wls_user',$user_instances, $default_params)
+
+  $group_instances = hiera('group_instances', {})
+  create_resources('wls_group',$group_instances, $default_params)
+
+  $authentication_provider_instances = hiera('authentication_provider_instances', {})
+  create_resources('wls_authentication_provider',$authentication_provider_instances, $default_params)
+}
+
+class basic_config{
+  require security
+  $default_params = {}
+
+  $wls_domain_instances = hiera('wls_domain_instances', {})
+  create_resources('wls_domain',$wls_domain_instances, $default_params)
+
+  # subscribe on domain changes
+  $wls_adminserver_instances_domain = hiera('wls_adminserver_instances_domain', {})
+  create_resources('wls_adminserver',$wls_adminserver_instances_domain, $default_params)
+
   $machines_instances = hiera('machines_instances', {})
   create_resources('wls_machine',$machines_instances, $default_params)
-}
 
-class managed_servers{
-  require machines
+  $server_instances = hiera('server_instances', {})
+  create_resources('wls_server',$server_instances, $default_params)
 
-  notify { 'class managed_servers':} 
-  $default_params = {}
-  $managed_servers_instances = hiera('managed_servers_instances', {})
-  create_resources('wls_server',$managed_servers_instances, $default_params)
-}
+  # subscribe on server changes
+  $wls_adminserver_instances_server = hiera('wls_adminserver_instances_server', {})
+  create_resources('wls_adminserver',$wls_adminserver_instances_server, $default_params)
 
-class clusters{
-  require managed_servers
+  $server_channel_instances = hiera('server_channel_instances', {})
+  create_resources('wls_server_channel',$server_channel_instances, $default_params)
 
-  notify { 'class clusters':} 
-  $default_params = {}
   $cluster_instances = hiera('cluster_instances', {})
   create_resources('wls_cluster',$cluster_instances, $default_params)
+
+  $coherence_cluster_instances = hiera('coherence_cluster_instances', {})
+  create_resources('wls_coherence_cluster',$coherence_cluster_instances, $default_params)
+
+  $server_template_instances = hiera('server_template_instances', {})
+  create_resources('wls_server_template',$server_template_instances, $default_params)
+
+  $dynamic_cluster_instances = hiera('dynamic_cluster_instances', {})
+  create_resources('wls_dynamic_cluster',$dynamic_cluster_instances, $default_params)
+
 }
 
-class jms_servers{
-  require clusters
+class datasources{
+  require basic_config
+  $default_params = {}
+  $datasource_instances = hiera('datasource_instances', {})
+  create_resources('wls_datasource',$datasource_instances, $default_params)
+}
 
-  notify { 'class jms_servers':} 
+
+class virtual_hosts{
+  require datasources
+  $default_params = {}
+  $virtual_host_instances = hiera('virtual_host_instances', {})
+  create_resources('wls_virtual_host',$virtual_host_instances, $default_params)
+}
+
+class workmanagers{
+  require virtual_hosts
+  $default_params = {}
+
+  $workmanager_constraint_instances = hiera('workmanager_constraint_instances', {})
+  create_resources('wls_workmanager_constraint',$workmanager_constraint_instances, $default_params)
+
+  $workmanager_instances = hiera('workmanager_instances', {})
+  create_resources('wls_workmanager',$workmanager_instances, $default_params)
+}
+
+class file_persistence{
+  require workmanagers
+
+  $default_params = {}
+
+  $file_persistence_folders = hiera('file_persistence_folders', {})
+  create_resources('file',$file_persistence_folders, $default_params)
+
+  $file_persistence_store_instances = hiera('file_persistence_store_instances', {})
+  create_resources('wls_file_persistence_store',$file_persistence_store_instances, $default_params)
+}
+
+class jms{
+  require file_persistence
+
   $default_params = {}
   $jmsserver_instances = hiera('jmsserver_instances', {})
   create_resources('wls_jmsserver',$jmsserver_instances, $default_params)
-}
 
-class jms_saf_agents{
-  require jms_servers
-
-  notify { 'class jms_saf_agents':}
-  $default_params = {}
-  $safagent_instances = hiera('safagent_instances', {})
-  create_resources('wls_safagent',$safagent_instances, $default_params)
-}
-
-class jms_modules{
-  require jms_saf_agents
-
-  notify { 'class jms_modules':} 
-  $default_params = {}
   $jms_module_instances = hiera('jms_module_instances', {})
   create_resources('wls_jms_module',$jms_module_instances, $default_params)
-}
 
-class jms_module_subdeployments{
-  require jms_modules
-
-  notify { 'class jms_module_subdeployments':} 
-  $default_params = {}
   $jms_subdeployment_instances = hiera('jms_subdeployment_instances', {})
   create_resources('wls_jms_subdeployment',$jms_subdeployment_instances, $default_params)
-}
-class jms_module_quotas{
-  require jms_module_subdeployments
 
-  notify { 'class jms_module_quotas':} 
-  $default_params = {}
   $jms_quota_instances = hiera('jms_quota_instances', {})
   create_resources('wls_jms_quota',$jms_quota_instances, $default_params)
-}
 
-class jms_module_cfs{
-  require jms_module_quotas
-
-  notify { 'class jms_module_cfs':} 
-  $default_params = {}
   $jms_connection_factory_instances = hiera('jms_connection_factory_instances', {})
   create_resources('wls_jms_connection_factory',$jms_connection_factory_instances, $default_params)
-}
 
-class jms_module_objects{
-  require jms_module_cfs
-
-  notify { 'class jms_module_objects':} 
-  $default_params = {}
   $jms_queue_instances = hiera('jms_queue_instances', {})
   create_resources('wls_jms_queue',$jms_queue_instances, $default_params)
+
+  $jms_topic_instances = hiera('jms_topic_instances', {})
+  create_resources('wls_jms_topic',$jms_topic_instances, $default_params)
+
+  $foreign_server_instances = hiera('foreign_server_instances', {})
+  create_resources('wls_foreign_server',$foreign_server_instances, $default_params)
+
+  $foreign_server_object_instances = hiera('foreign_server_object_instances', {})
+  create_resources('wls_foreign_server_object',$foreign_server_object_instances, $default_params)
+
+  $safagent_instances = hiera('safagent_instances', {})
+  create_resources('wls_safagent',$safagent_instances, $default_params)
+
+  $saf_remote_context_instances = hiera('saf_remote_context_instances', {})
+  create_resources('wls_saf_remote_context',$saf_remote_context_instances, $default_params)
+
+  $saf_error_handler_instances = hiera('saf_error_handler_instances', {})
+  create_resources('wls_saf_error_handler',$saf_error_handler_instances, $default_params)
+
+  $saf_imported_destination_instances = hiera('saf_imported_destination_instances', {})
+  create_resources('wls_saf_imported_destination',$saf_imported_destination_instances, $default_params)
+
+  $saf_imported_destination_object_instances = hiera('saf_imported_destination_object_instances', {})
+  create_resources('wls_saf_imported_destination_object',$saf_imported_destination_object_instances, $default_params)
 }
 
 class pack_domain{
-  require jms_module_objects
+  require jms
 
-  notify { 'class pack_domain':} 
   $default_params = {}
   $pack_domain_instances = hiera('pack_domain_instances', $default_params)
   create_resources('orawls::packdomain',$pack_domain_instances, $default_params)
 }
+

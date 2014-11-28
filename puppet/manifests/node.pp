@@ -1,22 +1,17 @@
 # test
 #
-# one machine setup with weblogic 12.1.2
-# creates an WLS Domain with JAX-WS (advanced, soap over jms)
-# needs jdksolaris, orawls, orautils
-#
 
 node 'nodesol1.example.com', 'nodesol2.example.com' {
-  
-  include os, ssh
-  include java, orawls::weblogic, opatch, orautils, copydomain, nodemanager
 
-  Class['java'] -> Class['orawls::weblogic'] 
+  include os, ssh, java, orautils, orawls::weblogic, opatch, copydomain, nodemanager
+
+  Class['java'] -> Class['orawls::weblogic']
 }
 
 # operating settings for Middleware
 class os {
 
-  notify { "class os ${operatingsystem}":} 
+  notify { "class os ${operatingsystem}":}
 
   $default_params = {}
   $host_instances = hiera('hosts', [])
@@ -45,7 +40,7 @@ class os {
 #                 Package['SUNWi1of'],
 #                 Package[$install],
                ],
-    unless  => "projects -l | grep -c ORAWLS",           
+    unless  => "projects -l | grep -c ORAWLS",
     path    => $execPath,
   }
 
@@ -53,15 +48,15 @@ class os {
     command     => "projmod -s -K 'project.max-shm-memory=(privileged,2G,deny)' default",
     require     => Exec["projadd max-shm-memory"],
     subscribe   => Exec["projadd max-shm-memory"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
-  }  
+  }
 
   exec { "projmod default max-file-descriptor":
     command     => "projmod -s -K 'process.max-file-descriptor=(basic,65536,deny)' default",
     require     => Exec["projmod default max-shm-memory"],
     subscribe   => Exec["projmod default max-shm-memory"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -69,7 +64,7 @@ class os {
     command     => "projmod -s -K 'project.max-sem-ids=(privileged,100,deny)' ORAWLS",
     subscribe   => Exec["projmod default max-file-descriptor"],
     require     => Exec["projmod default max-file-descriptor"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -77,7 +72,7 @@ class os {
     command     => "projmod -s -K 'project.max-shm-ids=(privileged,100,deny)' ORAWLS",
     require     => Exec["projmod max-sem-ids"],
     subscribe   => Exec["projmod max-sem-ids"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -85,7 +80,7 @@ class os {
     command     => "projmod -s -K 'process.max-sem-nsems=(privileged,256,deny)' ORAWLS",
     require     => Exec["projmod max-shm-ids"],
     subscribe   => Exec["projmod max-shm-ids"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -93,7 +88,7 @@ class os {
     command     => "projmod -s -K 'process.max-file-descriptor=(basic,65536,deny)' ORAWLS",
     require     => Exec["projmod max-sem-nsems"],
     subscribe   => Exec["projmod max-sem-nsems"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -101,7 +96,7 @@ class os {
     command     => "projmod -s -K 'process.max-stack-size=(privileged,32MB,deny)' ORAWLS",
     require     => Exec["projmod max-file-descriptor"],
     subscribe   => Exec["projmod max-file-descriptor"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -109,7 +104,7 @@ class os {
     command     => "usermod -K project=ORAWLS oracle",
     require     => Exec["projmod max-stack-size"],
     subscribe   => Exec["projmod max-stack-size"],
-    refreshonly => true, 
+    refreshonly => true,
     path        => $execPath,
   }
 
@@ -134,7 +129,7 @@ class os {
     command => "ndd -set /dev/udp udp_largest_anon_port 65500",
     require => Exec["ndd 3"],
     path    => $execPath,
-  }    
+  }
 
   exec { "ulimit -S":
     command => "ulimit -S -n 4096",
@@ -146,7 +141,7 @@ class os {
     command => "ulimit -H -n 65536",
     require => Exec["ulimit -S"],
     path    => $execPath,
-  }  
+  }
 
 
 
@@ -163,7 +158,7 @@ class ssh {
     ensure => "directory",
     alias  => "oracle-ssh-dir",
   }
-  
+
   file { "/export/home/oracle/.ssh/id_rsa.pub":
     ensure  => present,
     owner   => "oracle",
@@ -172,7 +167,7 @@ class ssh {
     source  => "/vagrant/ssh/id_rsa.pub",
     require => File["oracle-ssh-dir"],
   }
-  
+
   file { "/export/home/oracle/.ssh/id_rsa":
     ensure  => present,
     owner   => "oracle",
@@ -181,7 +176,7 @@ class ssh {
     source  => "/vagrant/ssh/id_rsa",
     require => File["oracle-ssh-dir"],
   }
-  
+
   file { "/export/home/oracle/.ssh/authorized_keys":
     ensure  => present,
     owner   => "oracle",
@@ -189,7 +184,7 @@ class ssh {
     mode    => "644",
     source  => "/vagrant/ssh/id_rsa.pub",
     require => File["oracle-ssh-dir"],
-  }        
+  }
 }
 
 
@@ -198,44 +193,34 @@ class java {
 
   notice 'class java'
 
-  jdksolaris::install7{'jdk1.7.0_45':
-    version              => '7u45',
-    fullVersion          => 'jdk1.7.0_45',
+  jdksolaris::install7{'jdk1.7.0_71':
+    version              => '7u71',
+    fullVersion          => 'jdk1.7.0_71',
     x64                  => true,
-    downloadDir          => '/data/install',
-    sourcePath           => "/vagrant",
-  }  
+    downloadDir          => '/var/tmp/install',
+    sourcePath           => "/software",
+  }
 
 
 }
 
 class opatch{
   require orawls::weblogic
-
-  notice 'class opatch'
   $default_params = {}
-  $opatch_instances = hiera('opatch_instances', [])
+  $opatch_instances = hiera('opatch_instances', {})
   create_resources('orawls::opatch',$opatch_instances, $default_params)
 }
 
-
 class copydomain {
-  require orawls::weblogic, opatch
-
-
-  notify { 'class copydomain':} 
+  require orawls::weblogic,opatch
   $default_params = {}
-  $copy_instances = hiera('copy_instances', [])
+  $copy_instances = hiera('copy_instances', {})
   create_resources('orawls::copydomain',$copy_instances, $default_params)
-
 }
-
 
 class nodemanager {
   require orawls::weblogic, opatch, copydomain
-
-  notify { 'class nodemanager':} 
   $default_params = {}
-  $nodemanager_instances = hiera('nodemanager_instances', [])
+  $nodemanager_instances = hiera('nodemanager_instances', {})
   create_resources('orawls::nodemanager',$nodemanager_instances, $default_params)
 }

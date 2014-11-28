@@ -42,11 +42,19 @@ module Puppet
     parameter :name
     parameter :jmsmodule
     parameter :connection_factory_name
+    parameter :timeout
     property :jndiname
     property :subdeployment
     property :defaulttargeting
     property :transactiontimeout
     property :xaenabled
+    property :clientidpolicy
+    property :subscriptionsharingpolicy
+    property :messagesmaximum
+    property :reconnectpolicy
+    property :loadbalancingenabled
+    property :serveraffinityenabled
+    property :attachjmsxuserid
 
     add_title_attributes(:jmsmodule, :connection_factory_name) do
       /^((.*\/)?(.*):(.*)?)$/
