@@ -19,6 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     adminsol.vm.synced_folder "/Users/edwin/software", "/software"
 
     adminsol.vm.network :private_network, ip: "10.10.10.10"
+    adminsol.ssh.insert_key = false
 
     adminsol.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2532"]
@@ -56,6 +57,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node1.vm.synced_folder "/Users/edwin/software", "/software"
 
     node1.vm.network :private_network, ip: "10.10.10.100"
+    node1.ssh.insert_key = false
 
     node1.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -93,6 +95,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node2.vm.synced_folder "/Users/edwin/software", "/software"
 
     node2.vm.network :private_network, ip: "10.10.10.200", auto_correct: true
+    node2.ssh.insert_key = false
 
     node2.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "2048"]
